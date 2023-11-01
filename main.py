@@ -1,21 +1,24 @@
-from langchain.llms.base import LLM
-from transformers import AutoTokenizer
-from petals import AutoDistributedModelForCausalLM
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from transformers import AutoTokenizer
+from petals import AutoDistributedModelForCausalLM
+from langchain.llms.base import LLM
 
 
 class CustomLLM(LLM):
-    def __init__(self, model_name: str, **kwargs):
+    def __init__(self, model_name: str,max_tokens: int = 15, **kwargs):
         super().__init__(**kwargs)
-        object.__setattr__(self, "tokenizer", AutoTokenizer.from_pretrained(model_name, use_fast=False, add_bos_token=False))
-        object.__setattr__(self, "model", AutoDistributedModelForCausalLM.from_pretrained(model_name))
-        #self.model.cuda()  # Ensure the model is on GPU
+        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False, add_bos_token=False)
+        model = AutoDistributedModelForCausalLM.from_pretrained(model_name)
+        model = model.cuda()  # Move the model to GPU if available
+        object.__setattr__(self, "tokenizer", tokenizer)
+        object.__setattr__(self, "model", model)
+        object.__setattr__(self, "max_tokens", max_tokens)
 
     def _call(self, text: str, stop=None, **kwargs) -> str:
-        inputs = tokenizer(text, return_tensors="pt")["input_ids"].cuda()
-        outputs = self.model.generate(inputs, max_new_tokens=150)
-        decoded_output = (tokenizer.decode(outputs[0]))
+        inputs = self.tokenizer(text, return_tensors="pt")["input_ids"].cuda()
+        outputs = self.model.generate(inputs, max_new_tokens=self.max_tokens)
+        decoded_output = (self.tokenizer.decode(outputs[0]))
         return decoded_output
 
     @property
@@ -29,14 +32,14 @@ llm = CustomLLM(model_name="petals-team/StableBeluga2")
 # Define the prompt template
 template = """
 Question: {question}
-Answer: Let's think step by step.
+Answer:
 """
 prompt = PromptTemplate(template=template, input_variables=["question"])
-
 # Create the LLMChain
 llm_chain = LLMChain(prompt=prompt, llm=llm)
 
 # Generate a response
-question = "What is the capital of France?"
+question = input("query:")
+print(...)
 response = llm_chain.run(question)
 print(response)
