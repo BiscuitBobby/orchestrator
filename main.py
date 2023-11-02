@@ -6,7 +6,7 @@ from langchain.llms.base import LLM
 
 
 class CustomLLM(LLM):
-    def __init__(self, model_name: str,max_tokens: int = 15, **kwargs):
+    def __init__(self, model_name: str, max_tokens: int = 15, **kwargs):
         super().__init__(**kwargs)
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False, add_bos_token=False)
         model = AutoDistributedModelForCausalLM.from_pretrained(model_name)
@@ -29,12 +29,7 @@ class CustomLLM(LLM):
 # Initialize the custom LLM
 llm = CustomLLM(model_name="petals-team/StableBeluga2")
 
-# Define the prompt template
-template = """
-Question: {question}
-Answer:
-"""
-prompt = PromptTemplate(template=template, input_variables=["question"])
+prompt = PromptTemplate(input_variables=["question"])
 # Create the LLMChain
 llm_chain = LLMChain(prompt=prompt, llm=llm)
 
