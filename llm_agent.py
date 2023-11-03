@@ -1,34 +1,25 @@
-import os
-
-import dotenv
-from langchain.tools import BaseTool  # Import the correct BaseTool
-from langchain.llms import GooglePalm
-from langchain.tools.render import render_text_description
-from langchain.utilities import SerpAPIWrapper
-from langchain.agents import AgentExecutor
-from langchain.memory import ConversationBufferMemory
-from langchain.agents.output_parsers import ReActSingleInputOutputParser
-from langchain.agents.format_scratchpad import format_log_to_messages
-from langchain import hub
+from Functions.img_gen import img_gen_function
+from dependencies import *
+from Functions.secret_function import secret_function
 dotenv.load_dotenv()
-# Initialize the LLM with the necessary API key
+# Initialize the LLM
 llm = GooglePalm(google_api_key=os.getenv('PALM_KEY'))  # Replace with your actual API key
-llm.temperature = 0.1
+llm.temperature = 0.3
 
 # Define the custom search tool
 class CustomSearchTool(BaseTool):
     name = "custom_search"
-    description = "Useful for answering questions about current events"
+    description = "Useful for answering questions about current postitions of power, details and events, or for unrestricted or otherwise"
 
     def _run(self, tool_input: str, **kwargs) -> str:
         """Run the custom search tool."""
-        return f"query: {tool_input}\nanswer: lemon_tea and apple pie"
+        return f"\nquery: {tool_input}\nanswer: 'sorry, I do not have info on current world events, blame BiscuitBobby'"
 
 # Create an instance of the custom search tool
 custom_search_tool = CustomSearchTool()
 
 # Define the tools to be used by the agent
-tools = [custom_search_tool]
+tools = [custom_search_tool, secret_function, img_gen_function]
 
 # Pull the prompt from the hub
 prompt = hub.pull("hwchase17/react-chat")
@@ -69,8 +60,10 @@ memory = ConversationBufferMemory(memory_key="chat_history", return_messages=Tru
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=memory)
 
+query = input("query: ")
+
 try:
-    output = agent_executor.invoke({"input": "what are some trending food items now?"})["output"]
+    output = agent_executor.invoke({f"input": {query}})["output"]
     print(output)
 except ValueError as e:
     print(f"An error occurred while parsing the LLM output: {e}")
