@@ -35,14 +35,40 @@ df = df.drop(columns=[1,
 df.columns = ['Text']
 
 
+def batch_embed_fn(text):
+    embeddings_batch = []
+    for text in text:
+        embedding = palm.generate_embeddings(model=model, text=text)['embedding']
+        embeddings_batch.append(embedding)
+    return embeddings_batch
+
+'''
 def embed_fn(text):
     print(text)
     return palm.generate_embeddings(model=model, text=text)['embedding']
 
+
 print('creating embeddings...')
 df['Embeddings'] = df['Text'].apply(embed_fn)
 print('created embeddings')
+'''
 
+# Create an empty list to store all embeddings
+all_embeddings = []
+
+batch_size = 25
+max_batch_number = len(df['Text'])
+# Loop through text chunks in batches
+for batch_index in range(0, max_batch_number, batch_size):
+    print(f'{batch_index}/{max_batch_number}')
+    # Create a text batch
+    text_batch = df['Text'][batch_index:batch_index + batch_size].tolist()
+
+    # Generate embeddings for the batch
+    batch_embeddings = batch_embed_fn(text_batch)
+    all_embeddings.extend(batch_embeddings)
+
+print('completed')
 print(df.columns)
 print(df.info())
 
