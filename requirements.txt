@@ -1,2 +1,16 @@
-petals
+#petals
 langchain
+google-generativeai
+langchainhub
+bardapi
+pandas
+# websearch:
+selenium #==4.15.2
+playwright #required for AsyncChromiumLoader
+html2text
+# querying embedding and vector database search:
+chromadb-client
+datasets
+numpy
+InstructorEmbedding==1.0.1
+sentence_transformers==2.2.2

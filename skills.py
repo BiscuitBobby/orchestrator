@@ -1,3 +1,3 @@
-from Functions.test import *
+from Functions.search import *
 
 skills = [test, ]
