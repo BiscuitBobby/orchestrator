@@ -1,5 +1,9 @@
+import dotenv
 import requests
-from dependencies import BaseTool
+from dependencies import BaseTool, os
+
+dotenv.load_dotenv()
+bot_token = os.environ['DISCORD_KEY']
 
 def get_dm_channel(user_id):
     url = 'https://discord.com/api/v9/users/@me/channels'
@@ -39,7 +43,7 @@ def send_message(channel_id, message):
         print(response.json())
     return response
 
-class secretTool(BaseTool):
+class DiscordBot(BaseTool):
     name = "discord_message"
     description = "Useful to send me or someone else a message via Discord"
 
@@ -59,8 +63,7 @@ class secretTool(BaseTool):
         else:
             return f"Failed to send message, status code: {response.status_code}"
 
-bot_token = 'MTE0OTU5MTI5NjY1OTQzNTUyMg.G4yInx.iqdLZA5UXgfEVCwTcVMsWqPYXdwQe7zZEOahY0'  # Replace with your bot's token
 
 # Create an instance of the custom search tool
-secret_function = secretTool(bot_token)
+discord_messaging = DiscordBot(bot_token)
 

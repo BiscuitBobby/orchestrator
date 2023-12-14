@@ -12,4 +12,4 @@ class imgTool(BaseTool):
         message = tool_input
         return f"\nquery: {message}\noutput: image generated successfully"
 
-img_gen_function = imgTool()
+img_gen_tool = imgTool()

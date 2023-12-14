@@ -1,133 +1,133 @@
-import pickle
-import threading
-import requests
+import dotenv
+import os
+import wolframalpha
+import google.generativeai as palm
+from selenium.webdriver.support.wait import WebDriverWait
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
-import time
-from langchain.document_loaders import AsyncChromiumLoader, AsyncHtmlLoader
-from langchain.document_transformers import BeautifulSoupTransformer, Html2TextTransformer
+from dependencies import BaseTool
 
-references = []
-text = ''
 
-def scrape_dynamic(url = "https://www.google.com/"):
-    global text
-    driver = webdriver.Firefox()
-    driver.get(url)
+dotenv.load_dotenv()
+#palm_key = os.getenv("PALM_KEY")
+palm_key = os.environ['PALM_KEY']
+palm.configure(api_key=palm_key)
 
-    # this is just to ensure that the page is loaded
-    time.sleep(5)
+models = [m for m in palm.list_models() if 'generateText' in m.supported_generation_methods]
+model = models[0].name
 
-    html = driver.page_source
+appid = 'XW8475-92QUW2TKUU'
+# App id obtained by the above steps
+app_id = appid
+client = wolframalpha.Client(app_id)
 
-    # this renders the JS code and stores all the information in static HTML code.
+class websearch:
+    def __init__(self, model):
+        self.model = model
+    def scrape_google_search(self, query, num_pages=5):
+        print('initializing...')
+        info = []
+        references = []
+        driver = webdriver.Firefox()
+        print('searching...')
+        try:
+            for page_num in range(num_pages):
+                url = f"https://www.google.com/search?q={query}&start={page_num * 10}"
+                driver.get(url)
 
-    # Now, we could simply apply bs4 to html variable
-    soup = BeautifulSoup(html, "html.parser")
+                # Extract search results from the current page
+                search_results = driver.find_elements("css selector", 'div.tF2Cxc')
 
-    #print(soup)
-    text += str(soup)
+                # Extract data from each search result
+                for result in search_results:
+                    description = ''
+                    title_element = result.find_element("css selector", 'h3')
+                    title = title_element.text
 
-    driver.close()
-    return soup
-def scrape_html(url):
-    try:
-        response = requests.get(url)
+                    url_element = result.find_element("css selector", 'a')
+                    url = url_element.get_attribute('href')
 
-        if response.status_code == 200:
-            # Get the HTML content
-            html_content = response.text
-            return html_content
+                    description_element = result.find_element("css selector", 'div')
+                    description = f"{description}\n{description_element.text}"
+
+                    '''print(f"Title: {title}")
+                    print(f"URL: {url}")
+                    print(f"DESCRIPTION: {description}")'''
+
+                    references.append(f"Title: {title}, URL: {url}, DESCRIPTION: {description}")
+
+                info.append(references)
+
+                # Scrape the next page if there are more results
+                if page_num < num_pages:
+                    # Wait for the "Next" button to be clickable
+                    next_button = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.ID, 'pnnext'))
+                    )
+                    next_button.click()
+
+        except Exception as e:
+            print(f"error: {e}")
+
+        finally:
+            # print(info)
+            driver.quit()
+            return references
+
+
+    def palm_prompt(self, query, context=None):
+        if context:
+            prompt = f"""
+                    Here is my query: {query},
+                    answer while keeping in account the following information:{context.replace(':', '')}
+                    """
+
         else:
-            print(f"Error: Unable to fetch data from {url}. Status code: {response.status_code}")
-            return None
+            try:
+                prompt = f"""
+                    Here is my query: {query},
+                    in case you are not familiar with it, here are some search results: {self.scrape_google_search(query)}
+                    """
+            except:
+                print("failed to scrape results")
+                prompt = f"query: {query}"
 
-    except requests.RequestException as e:
-        print(f"Error: {e}")
-        return None
+        completion = palm.generate_text(
+            model=self.model,
+            prompt=prompt,
+            temperature=0,
+            # The maximum length of the response
+            max_output_tokens=800,
+        )
+
+        print(completion.result)
+        return completion.result
+
+    def search_wolfram(self, query):
+        try:
+            res = client.query(query)
+            answer = next(res.results).text
+            print(f"{answer}\n\n")
+        except:
+            answer = None
+        return answer
+
+    def search(self, query):
+        print('start')
+        context = self.search_wolfram(query)
+        response = f"**query**:\n{query}\n\n**response**:\n{self.palm_prompt(query, context)}"
+        return response
 
 
-def soap_scrape(url):
-    loader = AsyncChromiumLoader([url])
-    html = loader.load()
-    bs_transformer = BeautifulSoupTransformer()
-    docs_transformed = bs_transformer.transform_documents(
-        html, tags_to_extract=["p", "li", "div", "a", "div", "ul", "script"]
-    )
-    print(docs_transformed)
-    with open('pickle', 'wb') as file:
-        pickle.dump(docs_transformed, file)
 
+class CustomSearchTool(BaseTool):
+    name = "custom_search"
+    description = "Useful for answering questions about future events, current affairs, positions of power, weather, details and events, search the internet"
+    searching_agent = websearch(model=model)
+    def _run(self, tool_input: str, **kwargs) -> str:
+        """Run search tool."""
+        print("running search...")
+        return f"\nquery: {tool_input}\nanswer: {self.searching_agent.search(tool_input)}"
 
-def data_extraction(url):
-    global references
-    data = scrape_html(url)
-    thread = threading.Thread(target=scrape_dynamic, args=(url,))
-    references.append(data)
-    thread.start()
-    return thread
-
-
-def scrape_google_search(query, num_pages=5):
-    print('initializing...')
-    info = []
-    # Use Firefox as the webdriver
-    driver = webdriver.Firefox()
-    print('searching')
-    try:
-        for page_num in range(num_pages):
-            url = f"https://www.google.com/search?q={query}&start={page_num * 10}"
-            driver.get(url)
-
-            # Extract search results from the current page
-            search_results = driver.find_elements("css selector", 'div.tF2Cxc')
-
-            # Extract data from each search result
-            for result in search_results:
-                description = ''
-                title_element = result.find_element("css selector", 'h3')
-                title = title_element.text
-
-                url_element = result.find_element("css selector", 'a')
-                url = url_element.get_attribute('href')
-
-                description_element = result.find_element("css selector", 'div')
-                description = f"{description}\n{description_element.text}"
-
-                print(f"Title: {title}")
-                print(f"URL: {url}")
-                print(f"DESCRIPTION: {description}")
-                references.append(f"Title: {title}, URL: {url}, DESCRIPTION: {description}")
-
-                # Extract additional data if needed
-            info.append(references)
-
-            # Scrape the next page if there are more results
-            if page_num < num_pages:
-                # Wait for the "Next" button to be clickable
-                next_button = WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable((By.ID, 'pnnext'))
-                )
-                next_button.click()
-
-    except Exception as e:
-        print(f"error: {e}")
-
-    finally:
-        print(info)
-        # Close the driver after all the pages have been processed
-        driver.quit()
-
-        with open('data.txt', 'w') as x:
-            with open('data.txt', 'a') as y:
-                for i in info:
-                    for j in i:
-                        y.write(str(j))
-
-# Example usage
-#query = "What is a nebula"
-#scrape_google_search(query)
-scrape_google_search("what is a nebula")
+custom_search_tool = CustomSearchTool()

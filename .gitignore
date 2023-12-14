@@ -1,2 +1,5 @@
 /venv/
 /.env
+/Functions/.env
+/.idea
+/__pycache__

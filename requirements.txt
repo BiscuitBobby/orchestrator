@@ -1,16 +1,21 @@
 #petals
-langchain
+langchain~=0.0.338
 google-generativeai
 langchainhub
 bardapi
-pandas
+pandas~=2.1.4
 # websearch:
-selenium #==4.15.2
+selenium~=4.15.2
 playwright #required for AsyncChromiumLoader
 html2text
 # querying embedding and vector database search:
 chromadb-client
-datasets
+datasets~=2.15.0
 numpy
 InstructorEmbedding==1.0.1
 sentence_transformers==2.2.2
+python-dotenv~=1.0.0
+wolframalpha~=5.0.0
+PyPDF2~=3.0.1
+requests~=2.31.0
+transformers~=4.35.2
