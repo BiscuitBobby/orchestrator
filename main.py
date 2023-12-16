@@ -5,7 +5,7 @@ from dependencies import *
 
 dotenv.load_dotenv()
 # Initialize the LLM
-llm = GooglePalm(google_api_key=os.getenv('PALM_KEY'))  # Replace with your actual API key
+llm = GooglePalm(google_api_key=os.getenv('GOOGLE_API_KEY'))  # Replace with your actual API key
 llm.temperature = 0.3
 
 

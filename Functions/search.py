@@ -11,7 +11,7 @@ from dependencies import BaseTool
 
 dotenv.load_dotenv()
 #palm_key = os.getenv("PALM_KEY")
-palm_key = os.environ['PALM_KEY']
+palm_key = os.environ['GOOGLE_API_KEY']
 palm.configure(api_key=palm_key)
 
 models = [m for m in palm.list_models() if 'generateText' in m.supported_generation_methods]
