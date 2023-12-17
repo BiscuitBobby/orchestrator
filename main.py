@@ -1,3 +1,4 @@
+from Functions.arbitrary_code import arbitrary_code
 from Functions.img_gen import img_gen_tool
 from Functions.search import custom_search_tool
 from Functions.discord_message import discord_messaging
@@ -10,7 +11,7 @@ llm.temperature = 0.3
 
 
 # Define the tools to be used by the agent
-tools = [custom_search_tool, discord_messaging, img_gen_tool]
+tools = [custom_search_tool, discord_messaging, arbitrary_code]
 
 
 # Pull the prompt from the hub

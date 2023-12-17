@@ -45,7 +45,7 @@ def send_message(channel_id, message):
 
 class DiscordBot(BaseTool):
     name = "discord_message"
-    description = "Useful to send me or someone else a message via Discord"
+    description = "Useful to send me or someone else a message via Discord, cannot be used to open discord app"
 
     def __init__(self, bot_token: str):
         bot_token = bot_token

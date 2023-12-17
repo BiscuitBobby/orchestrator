@@ -123,7 +123,7 @@ class websearch:
 
 class CustomSearchTool(BaseTool):
     name = "custom_search"
-    description = "Useful for answering questions about future events, current affairs, positions of power, weather, details and events, search the internet"
+    description = "Useful for answering questions about future events, current affairs, positions of power, weather, details and events, browse the internet"
     searching_agent = websearch(model=model)
     def _run(self, tool_input: str, **kwargs) -> str:
         """Run search tool."""
