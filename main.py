@@ -1,13 +1,13 @@
+from langchain.llms.ollama import Ollama
+from langchain_google_genai import ChatGoogleGenerativeAI
 from Functions.arbitrary_code import arbitrary_code
 from Functions.img_gen import img_gen_tool
 from Functions.search import custom_search_tool
 from Functions.discord_message import discord_messaging
 from dependencies import *
+import streamlit as st
 
-dotenv.load_dotenv()
-# Initialize the LLM
-llm = GooglePalm(google_api_key=os.getenv('GOOGLE_API_KEY'))  # Replace with your actual API key
-llm.temperature = 0.3
+llm = Ollama(model="phi")
 
 
 # Define the tools to be used by the agent
@@ -54,12 +54,24 @@ memory = ConversationBufferMemory(memory_key="chat_history", return_messages=Tru
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=memory)
 
 
-while True:
-    query = input("query: ")
+
+# Streamlit UI
+st.title("Biscuit agent")
+prompt = st.text_area("Enter your prompt", "Why do we continue... just to suffer")
+if st.button("Generate Output"):
+    # Code for generating output based on user input
+    query = prompt
+    st.text("Generating output...")
+    st.write('')
     try:
         output = agent_executor.invoke({f"input": {query}})["output"]
         print(output)
+        st.text("Output:")
+        st.write(output)
     except ValueError as e:
+        st.text("Error:")
+        st.write(e)
         print(f"An error occurred while parsing the LLM output: {e}")
     except KeyboardInterrupt:
+        st.text("Key interrupt")
         print("exiting")
