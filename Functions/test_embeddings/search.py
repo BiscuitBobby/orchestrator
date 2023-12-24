@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer, util
 
-def compute_top_similarities(model, query, passages, top_k=3):
+def compute_top_similarities(model, query, passages, threshold=0.1, top_k=3):
     # Encode the query and passages
     query_embedding = model.encode(query)
     passage_embeddings = model.encode(passages)
@@ -8,8 +8,11 @@ def compute_top_similarities(model, query, passages, top_k=3):
     # Compute the similarities
     similarities = [util.dot_score(query_embedding, passage_emb) for passage_emb in passage_embeddings]
 
-    # Find the indices of the top-k passages with the highest similarities
-    top_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)[:top_k]
+    # Find the indices of passages with similarity values greater than the threshold
+    top_indices = [index for index, sim in enumerate(similarities) if sim > threshold]
+
+    # Sort the top indices based on similarity values
+    top_indices = sorted(top_indices, key=lambda i: similarities[i], reverse=True)[:top_k]
 
     # Return the top indices and their corresponding similarity values
     return [(index, similarities[index]) for index in top_indices]
@@ -17,11 +20,12 @@ def compute_top_similarities(model, query, passages, top_k=3):
 # Example usage for one query
 model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
 
-query = 'what is london known for'
 passages_set = [
     'London has 9,787,426 inhabitants at the 2011 census',
 
     'London is known for its financial district',
+
+    'London bridge is falling down',
 
     '''Below is a simple example of a PyQt application that creates a basic window with a button. When the button is clicked, a message box will appear.
     ```
@@ -59,6 +63,8 @@ sys.exit(app.exec_())
     ```
 '''
 ]
+
+query = 'how to make a pyqt app'
 
 top_similarities = compute_top_similarities(model, query, passages_set, top_k=3)
 
