@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer, util
 
-def compute_similarity(model, query, passages):
+def compute_top_similarities(model, query, passages, top_k=3):
     # Encode the query and passages
     query_embedding = model.encode(query)
     passage_embeddings = model.encode(passages)
@@ -8,19 +8,21 @@ def compute_similarity(model, query, passages):
     # Compute the similarities
     similarities = [util.dot_score(query_embedding, passage_emb) for passage_emb in passage_embeddings]
 
-    # Find the index of the passage with the highest similarity
-    max_similarity_index = similarities.index(max(similarities))
+    # Find the indices of the top-k passages with the highest similarities
+    top_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)[:top_k]
 
-    # Return the index and the similarity value
-    return max_similarity_index, similarities[max_similarity_index]
+    # Return the top indices and their corresponding similarity values
+    return [(index, similarities[index]) for index in top_indices]
 
 # Example usage for one query
 model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
 
-query = 'How to make a pyqt app'
+query = 'what is london known for'
 passages_set = [
     'London has 9,787,426 inhabitants at the 2011 census',
+
     'London is known for its financial district',
+
     '''Below is a simple example of a PyQt application that creates a basic window with a button. When the button is clicked, a message box will appear.
     ```
 import sys
@@ -58,9 +60,12 @@ sys.exit(app.exec_())
 '''
 ]
 
-max_similarity_index, max_similarity_value = compute_similarity(model, query, passages_set)
+top_similarities = compute_top_similarities(model, query, passages_set, top_k=3)
 
-# Print the result with the highest similarity
+# Print the top 3 passages with their similarity values
 print(f"Query: {query}")
-print(f"Passage with Highest Similarity: {passages_set[max_similarity_index]}")
-print(f"Highest Similarity Value: {max_similarity_value}")
+for rank, (index, similarity) in enumerate(top_similarities, 1):
+    print(f"Rank {rank}:")
+    print(f"  Passage: {passages_set[index]}")
+    print(f"  Similarity: {similarity}")
+    print()
