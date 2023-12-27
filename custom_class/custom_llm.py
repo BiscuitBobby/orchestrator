@@ -1,9 +1,12 @@
 # https://health.petals.dev/
+from langchain.agents import AgentExecutor
+from langchain.agents.format_scratchpad import format_log_to_messages
+from langchain.agents.output_parsers import ReActSingleInputOutputParser
+from langchain.memory import ConversationBufferMemory
 from transformers import AutoTokenizer
 from petals import AutoDistributedModelForCausalLM
 from langchain.llms.base import LLM
 from typing import List, Optional, Any
-from dependencies import *
 from Functions.discord_message import discord_messaging
 
 
