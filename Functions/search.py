@@ -29,7 +29,7 @@ class websearch:
         print('initializing...')
         info = []
         references = []
-        driver = webdriver.Firefox()
+        driver = webdriver.Chrome()
         print('searching...')
         try:
             for page_num in range(num_pages):
@@ -76,7 +76,7 @@ class websearch:
             return references
 
 
-    def palm_prompt(self, query, context=None):
+    def llm_prompt(self, query, context=None):
         if context:
             prompt = f"""
                     Here is my query: {query},
@@ -116,14 +116,14 @@ class websearch:
     def search(self, query):
         print('start')
         context = self.search_wolfram(query)
-        response = f"**query**:\n{query}\n\n**response**:\n{self.palm_prompt(query, context)}"
+        response = f"**query**:\n{query}\n\n**response**:\n{self.llm_prompt(query, context)}"
         return response
 
-
+# -------------------------------------------------------------------------------------------------------------------
 
 class CustomSearchTool(BaseTool):
     name = "custom_search"
-    description = "Useful for answering questions about future events, current affairs, positions of power, weather, details and events, search the internet"
+    description = "Useful for answering questions about future events, current affairs, positions of power, weather, details and events, browse the internet"
     searching_agent = websearch(model=model)
     def _run(self, tool_input: str, **kwargs) -> str:
         """Run search tool."""
