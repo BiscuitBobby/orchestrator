@@ -1,18 +1,12 @@
 import builtins
-import dotenv
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import BaseTool
 from langchain_experimental.utilities import PythonREPL
-import os
-from langchain_google_genai import ChatGoogleGenerativeAI
+from models.llm import gemini_pro
 import pipimport
 
-dotenv.load_dotenv()
-if "GOOGLE_API_KEY" not in os.environ:
-    os.environ["GOOGLE_API_KEY"] = os.environ['GOOGLE_API_KEY']
-
-model = ChatGoogleGenerativeAI(model="gemini-pro")
+model = gemini_pro
 
 template = PromptTemplate(
     input_variables=["input"],

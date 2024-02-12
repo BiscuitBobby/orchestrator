@@ -1,8 +1,9 @@
 import builtins
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from models.embeddings import all_MiniLM_L6_v2
 from langchain_community.document_loaders import JSONLoader
 from langchain_community.vectorstores import Qdrant
 from dependencies import BaseTool, os
+from models.llm import gemini_pro
 from pathlib import Path
 import requests
 import dotenv
@@ -11,7 +12,8 @@ import json
 dotenv.load_dotenv()
 bot_token = os.environ['DISCORD_KEY']
 
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+model = gemini_pro
+embeddings = all_MiniLM_L6_v2
 
 loader = JSONLoader(
     file_path='./contacts.json',
@@ -26,11 +28,13 @@ qdrant = Qdrant.from_documents(
     collection_name="my_documents",
 )
 
+
 def get_contact(query):
     found_docs = qdrant.similarity_search(query)
     output = json.loads(found_docs[0].page_content)
     print(output)
     return str(output["id"])
+
 
 def get_dm_channel(user_id):
     url = 'https://discord.com/api/v9/users/@me/channels'
@@ -51,6 +55,7 @@ def get_dm_channel(user_id):
         print(response.json())
         return None
 
+
 def send_message(channel_id, message):
     url = f'https://discord.com/api/v9/channels/{channel_id}/messages'
     headers = {
@@ -70,6 +75,7 @@ def send_message(channel_id, message):
         print(response.json())
     return response
 
+
 # -------------------------------------------------------------------------------------------------------------------
 
 class DiscordBot(BaseTool):
@@ -84,11 +90,14 @@ class DiscordBot(BaseTool):
     def _run(self, tool_input: str, **kwargs) -> str:
         """Send a message to a Discord channel."""
         message = tool_input
-        channel_id = get_dm_channel(get_contact(builtins.global_prompt))# (input("\nenter user id: "))
+        recipient = model.invoke(
+            f"From the following text return 'me' if it contains the word 'me' else return the user/person it is intended for:{builtins.global_prompt}")
+        recipient_data = get_contact(recipient)
+        print(f"recipient_id: {recipient_data}\n{tool_input}")
+        input(f"recipient: {recipient}")
+        channel_id = get_dm_channel(get_contact(recipient_data))  # (input("\nenter user id: "))
 
-        input(f"recipient: {get_contact(builtins.global_prompt)}\n{tool_input}")
-        
-        if tool_input[0]=='{' and tool_input[-1] =='}':
+        if tool_input[0] == '{' and tool_input[-1] == '}':
             message = json.loads(message)
             if 'message' in message:
                 response = send_message(channel_id, message["message"])
