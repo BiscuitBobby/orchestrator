@@ -1,39 +1,17 @@
 import builtins
-from models.embeddings import all_MiniLM_L6_v2
-from langchain_community.document_loaders import JSONLoader
-from langchain_community.vectorstores import Qdrant
-from dependencies import BaseTool, os
+
+from Data.VectorDB import retrieve_contact
+from Secrets.keys import bot_token
+from dependencies import BaseTool
 from models.llm import gemini_pro
-from pathlib import Path
 import requests
-import dotenv
 import json
 
-dotenv.load_dotenv()
-bot_token = os.environ['DISCORD_KEY']
-
 model = gemini_pro
-embeddings = all_MiniLM_L6_v2
-
-loader = JSONLoader(
-    file_path='./contacts.json',
-    jq_schema='.contacts[]',
-    text_content=False)
-
-data = loader.load()
-qdrant = Qdrant.from_documents(
-    data,
-    embeddings,
-    location=":memory:",  # Local mode with in-memory storage only
-    collection_name="my_documents",
-)
 
 
 def get_contact(query):
-    found_docs = qdrant.similarity_search(query)
-    output = json.loads(found_docs[0].page_content)
-    print(output)
-    return str(output["id"])
+    return str(346148004002267156)
 
 
 def get_dm_channel(user_id):
@@ -90,27 +68,36 @@ class DiscordBot(BaseTool):
     def _run(self, tool_input: str, **kwargs) -> str:
         """Send a message to a Discord channel."""
         message = tool_input
-        recipient = model.invoke(
-            f"From the following text return 'me' if it contains the word 'me' else return the user/person it is intended for:{builtins.global_prompt}")
-        recipient_data = get_contact(recipient)
-        print(f"recipient_id: {recipient_data}\n{tool_input}")
-        input(f"recipient: {recipient}")
-        channel_id = get_dm_channel(get_contact(recipient_data))  # (input("\nenter user id: "))
+        print(message)
+        try:
+            recipient = model.invoke(
+                f"From the following text return 'me' if it contains the word 'me' else return the user/person it is intended for:{builtins.global_prompt}")
+            # output format is: content='recipient' class 'langchain_core.messages.ai.AIMessage'
+            print(recipient)
 
-        if tool_input[0] == '{' and tool_input[-1] == '}':
-            message = json.loads(message)
-            if 'message' in message:
-                response = send_message(channel_id, message["message"])
+            recipient = retrieve_contact(recipient.content)
+
+            print(f"recipient_id: {recipient['discord_id']}\n{tool_input}")
+            input(f"recipient: {recipient}\n send message?")
+
+            channel_id = get_dm_channel(get_contact(recipient["discord_id"]))  # (input("\nenter user id: "))
+
+            if tool_input[0] == '{' and tool_input[-1] == '}':
+                message = json.loads(message)
+                if 'message' in message:
+                    response = send_message(channel_id, message["message"])
+                else:
+                    for i in message:
+                        response = send_message(channel_id, message[i])
             else:
-                for i in message:
-                    response = send_message(channel_id, message[i])
-        else:
-            response = send_message(channel_id, message)
+                response = send_message(channel_id, message)
 
-        if response.status_code == 200 or response.status_code == 201:
-            return "Message sent successfully"
-        else:
-            return f"Failed to send message, status code: {response.status_code}"
+            if response.status_code == 200 or response.status_code == 201:
+                return "Message sent successfully"
+            else:
+                return f"Failed to send message, status code: {response.status_code}"
+        except:
+            return "failed to send message"
 
 
 # Create an instance of the custom search tool

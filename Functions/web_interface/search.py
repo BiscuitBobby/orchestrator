@@ -1,25 +1,21 @@
-import dotenv
-import os
 import wolframalpha
 import google.generativeai as palm
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from Secrets.keys import google_api, wolfram_app_id
 from dependencies import BaseTool
 
 
-dotenv.load_dotenv()
-#palm_key = os.getenv("PALM_KEY")
-palm_key = os.environ['GOOGLE_API_KEY']
-palm.configure(api_key=palm_key)
+palm.configure(api_key=google_api)
 
 models = [m for m in palm.list_models() if 'generateText' in m.supported_generation_methods]
 model = models[0].name
 
-appid = 'XW8475-92QUW2TKUU'
+
 # App id obtained by the above steps
-app_id = appid
+app_id = wolfram_app_id
 client = wolframalpha.Client(app_id)
 
 class websearch:
