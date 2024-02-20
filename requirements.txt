@@ -12,3 +12,5 @@ pillow
 # websearch:
 selenium~=4.15.2
 wolframalpha~=5.0.0
+
+flet

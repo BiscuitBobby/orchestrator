@@ -47,10 +47,6 @@ class websearch:
                     description_element = result.find_element("css selector", 'div')
                     description = f"{description}\n{description_element.text}"
 
-                    '''print(f"Title: {title}")
-                    print(f"URL: {url}")
-                    print(f"DESCRIPTION: {description}")'''
-
                     references.append(f"Title: {title}, URL: {url}, DESCRIPTION: {description}")
 
                 info.append(references)

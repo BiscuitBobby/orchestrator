@@ -10,10 +10,6 @@ import json
 model = gemini_pro
 
 
-def get_contact(query):
-    return str(346148004002267156)
-
-
 def get_dm_channel(user_id):
     url = 'https://discord.com/api/v9/users/@me/channels'
     headers = {
@@ -80,7 +76,7 @@ class DiscordBot(BaseTool):
             print(f"recipient_id: {recipient['discord_id']}\n{tool_input}")
             input(f"recipient: {recipient}\n send message?")
 
-            channel_id = get_dm_channel(get_contact(recipient["discord_id"]))  # (input("\nenter user id: "))
+            channel_id = get_dm_channel(recipient["discord_id"])  # (input("\nenter user id: "))
 
             if tool_input[0] == '{' and tool_input[-1] == '}':
                 message = json.loads(message)
@@ -96,9 +92,9 @@ class DiscordBot(BaseTool):
                 return "Message sent successfully"
             else:
                 return f"Failed to send message, status code: {response.status_code}"
-        except:
+        except Exception as e:
+            print(e)
             return "failed to send message"
 
 
-# Create an instance of the custom search tool
 discord_messaging = DiscordBot(bot_token)
