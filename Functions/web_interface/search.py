@@ -21,43 +21,34 @@ client = wolframalpha.Client(app_id)
 class websearch:
     def __init__(self, model):
         self.model = model
-    def scrape_google_search(self, query, num_pages=5):
+    def scrape_google_search(self, query):
         print('initializing...')
         info = []
         references = []
         driver = webdriver.Chrome()
         print('searching...')
         try:
-            for page_num in range(num_pages):
-                url = f"https://www.google.com/search?q={query}&start={page_num * 10}"
-                driver.get(url)
+            url = f"https://www.google.com/search?q={query}"
+            driver.get(url)
 
-                # Extract search results from the current page
-                search_results = driver.find_elements("css selector", 'div.tF2Cxc')
+            # Extract search results from the current page
+            search_results = driver.find_elements("css selector", 'div.tF2Cxc')
 
-                # Extract data from each search result
-                for result in search_results:
-                    description = ''
-                    title_element = result.find_element("css selector", 'h3')
-                    title = title_element.text
+            # Extract data from each search result
+            for result in search_results:
+                description = ''
+                title_element = result.find_element("css selector", 'h3')
+                title = title_element.text
 
-                    url_element = result.find_element("css selector", 'a')
-                    url = url_element.get_attribute('href')
+                url_element = result.find_element("css selector", 'a')
+                url = url_element.get_attribute('href')
 
-                    description_element = result.find_element("css selector", 'div')
-                    description = f"{description}\n{description_element.text}"
+                description_element = result.find_element("css selector", 'div')
+                description = f"{description}\n{description_element.text}"
 
-                    references.append(f"Title: {title}, URL: {url}, DESCRIPTION: {description}")
+                references.append(f"Title: {title}, URL: {url}, DESCRIPTION: {description}")
 
-                info.append(references)
-
-                # Scrape the next page if there are more results
-                if page_num < num_pages:
-                    # Wait for the "Next" button to be clickable
-                    next_button = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.ID, 'pnnext'))
-                    )
-                    next_button.click()
+            info.append(references)
 
         except Exception as e:
             print(f"error: {e}")

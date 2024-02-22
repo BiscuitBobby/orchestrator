@@ -1,4 +1,6 @@
 import builtins
+
+from Widgets.sidebar import rail
 from agent import agent_executor
 import flet as ft
 
@@ -23,11 +25,12 @@ class ChatMessage(ft.Row):
             ),
             ft.Column(
                 [
-                    ft.Text(message.user_name, weight="bold"),
+                    ft.Text(message.user_name, weight="bold", no_wrap=False),
                     ft.Text(message.text, selectable=True),
                 ],
                 tight=True,
-                spacing=5,
+                spacing=10,
+                width=500 # text width
             ),
         ]
 
@@ -43,9 +46,8 @@ class ChatMessage(ft.Row):
         else:
             return ft.colors.GREEN
 
-
 def main(page: ft.Page):
-    page.window_width = 480
+    page.window_width = 600
     page.window_height = 800
     page.title = "Orchestrator"
 
@@ -102,23 +104,31 @@ def main(page: ft.Page):
 
     # Add everything to the page
     page.add(
-        ft.Container(
-            content=chat,
-            border=ft.border.all(1, ft.colors.OUTLINE),
-            border_radius=5,
-            padding=10,
-            expand=True,
-        ),
         ft.Row(
             [
-                new_message,
-                ft.IconButton(
-                    icon=ft.icons.SEND_ROUNDED,
-                    tooltip="Prompt",
-                    on_click=send_message_click,
+                rail,
+                ft.VerticalDivider(width=1),
+                ft.Column([
+                ft.Container(
+                    content=chat,
+                    border=ft.border.all(1, ft.colors.OUTLINE),
+                    border_radius=5,
+                    padding=10,
+                    expand=True,
                 ),
-            ]
-        ),
+                ft.Row(
+                    [
+                        new_message,
+                        ft.IconButton(
+                            icon=ft.icons.SEND_ROUNDED,
+                            tooltip="Prompt",
+                            on_click=send_message_click,
+                        ),
+                    ]
+                ),], alignment=ft.MainAxisAlignment.START, expand=True)
+            ],
+            expand=True,
+        )
     )
 
 
