@@ -1,26 +1,22 @@
 import wolframalpha
-import google.generativeai as palm
-from selenium.webdriver.support.wait import WebDriverWait
+import google.generativeai as gemini
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from Secrets.keys import google_api, wolfram_app_id
 from dependencies import BaseTool
 
+gemini.configure(api_key=google_api)
 
-palm.configure(api_key=google_api)
-
-models = [m for m in palm.list_models() if 'generateText' in m.supported_generation_methods]
+models = [m for m in gemini.list_models() if 'generateText' in m.supported_generation_methods]
 model = models[0].name
 
-
-# App id obtained by the above steps
 app_id = wolfram_app_id
 client = wolframalpha.Client(app_id)
+
 
 class websearch:
     def __init__(self, model):
         self.model = model
+
     def scrape_google_search(self, query):
         print('initializing...')
         info = []
@@ -58,7 +54,6 @@ class websearch:
             driver.quit()
             return references
 
-
     def llm_prompt(self, query, context=None):
         if context:
             prompt = f"""
@@ -76,7 +71,7 @@ class websearch:
                 print("failed to scrape results")
                 prompt = f"query: {query}"
 
-        completion = palm.generate_text(
+        completion = gemini.generate_text(
             model=self.model,
             prompt=prompt,
             temperature=0,
@@ -102,15 +97,18 @@ class websearch:
         response = f"**query**:\n{query}\n\n**response**:\n{self.llm_prompt(query, context)}"
         return response
 
+
 # -------------------------------------------------------------------------------------------------------------------
 
 class CustomSearchTool(BaseTool):
     name = "custom_search"
     description = "Useful for answering questions about future events, current affairs, positions of power, weather, details and events, browse the internet"
     searching_agent = websearch(model=model)
+
     def _run(self, tool_input: str, **kwargs) -> str:
         """Run search tool."""
         print("running search...")
         return f"\nquery: {tool_input}\nanswer: {self.searching_agent.search(tool_input)}"
+
 
 custom_search_tool = CustomSearchTool()
