@@ -1,54 +1,15 @@
 import builtins
-
+from Widgets.chat import *
 from Widgets.sidebar import rail
 from agent import agent_executor
 import flet as ft
 
-user = "BiscuitBobby"
-
-class Message:
-    def __init__(self, user_name: str, text: str, message_type: str):
-        self.user_name = user_name
-        self.text = text
-        self.message_type = message_type
-
-
-class ChatMessage(ft.Row):
-    def __init__(self, message: Message):
-        super().__init__()
-        self.vertical_alignment = "start"
-        self.controls = [
-            ft.CircleAvatar(
-                content=ft.Text(self.get_initials(message.user_name)),
-                color=ft.colors.WHITE,
-                bgcolor=self.get_avatar_color(message.user_name),
-            ),
-            ft.Column(
-                [
-                    ft.Text(message.user_name, weight="bold", no_wrap=False),
-                    ft.Text(message.text, selectable=True),
-                ],
-                tight=True,
-                spacing=10,
-                width=500 # text width
-            ),
-        ]
-
-    def get_initials(self, user_name: str):
-        if user_name:
-            return user_name[:1].capitalize()
-        else:
-            return "Unknown"
-
-    def get_avatar_color(self, user_name: str):
-        if user_name == user:
-            return ft.colors.BLUE
-        else:
-            return ft.colors.GREEN
 
 def main(page: ft.Page):
+    builtins.global_prompt = ''
     page.window_width = 600
     page.window_height = 800
+    page.window_min_width = 520
     page.title = "Orchestrator"
 
     def send_message_click(e):
@@ -62,17 +23,23 @@ def main(page: ft.Page):
             page.update()
 
             try:
-                print("generating output")
+                new_message.read_only, new_message.autofocus = True, False
+                new_message.hint_text = "generating output"
+                page.update()
+
                 output = agent_executor.invoke({f"input": {builtins.global_prompt}})["output"]
-                print(output)
+                new_message.read_only, new_message.autofocus = False, True
+                new_message.hint_text = "Enter prompt..."
+
                 page.pubsub.send_all(Message("Agent", output, message_type="chat_message"))
-                new_message.value = ""
                 new_message.focus()
                 page.update()
+                for message in chat.controls:
+                    print(message)
 
             except Exception as e:
                 page.pubsub.send_all(Message("Agent", f"an error has occured:\n{e}", message_type="chat_message"))
-                new_message.value = ""
+                new_message.read_only, new_message.autofocus = False, True
                 new_message.focus()
                 page.update()
 
@@ -88,6 +55,7 @@ def main(page: ft.Page):
         expand=True,
         spacing=10,
         auto_scroll=True,
+        width=page.window_width
     )
 
     # A new message entry form
@@ -109,23 +77,23 @@ def main(page: ft.Page):
                 rail,
                 ft.VerticalDivider(width=1),
                 ft.Column([
-                ft.Container(
-                    content=chat,
-                    border=ft.border.all(1, ft.colors.OUTLINE),
-                    border_radius=5,
-                    padding=10,
-                    expand=True,
-                ),
-                ft.Row(
-                    [
-                        new_message,
-                        ft.IconButton(
-                            icon=ft.icons.SEND_ROUNDED,
-                            tooltip="Prompt",
-                            on_click=send_message_click,
-                        ),
-                    ]
-                ),], alignment=ft.MainAxisAlignment.START, expand=True)
+                    ft.Container(
+                        content=chat,
+                        border=ft.border.all(1, ft.colors.OUTLINE),
+                        border_radius=5,
+                        padding=10,
+                        expand=True,
+                    ),
+                    ft.Row(
+                        [
+                            new_message,
+                            ft.IconButton(
+                                icon=ft.icons.SEND_ROUNDED,
+                                tooltip="Send prompt",
+                                on_click=send_message_click,
+                            ),
+                        ]
+                    ), ], alignment=ft.MainAxisAlignment.START, expand=True)
             ],
             expand=True,
         )
@@ -133,3 +101,8 @@ def main(page: ft.Page):
 
 
 ft.app(target=main)
+
+try:
+    del builtins.global_prompt
+except Exception as e:
+    print(e)
