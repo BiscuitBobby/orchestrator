@@ -55,7 +55,6 @@ def main(page: ft.Page):
         expand=True,
         spacing=10,
         auto_scroll=True,
-        width=page.window_width
     )
 
     # A new message entry form

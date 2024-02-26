@@ -8,7 +8,7 @@ class imgTool(BaseTool):
         super().__init__()
 
     def _run(self, tool_input: str, **kwargs) -> str:
-        """Send a message to a Discord channel."""
+        """Generate image"""
         message = tool_input
         return f"\nquery: {message}\noutput: image generated successfully"
 

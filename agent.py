@@ -1,4 +1,6 @@
 from Functions.code_gen_execution.arbitrary_code import arbitrary_code
+from Functions.serial_io.serial_in import serial_in
+from Functions.serial_io.serial_out import serial_out
 from Functions.web_interface.search import custom_search_tool
 from Functions.discord_module.discord_message import discord_messaging
 from dependencies import *
@@ -12,7 +14,7 @@ llm.temperature = 0.3
 
 
 # Define the tools to be used by the agent
-tools = [custom_search_tool, discord_messaging, arbitrary_code]
+tools = [custom_search_tool, discord_messaging, arbitrary_code, serial_in, serial_out]
 
 
 # Pull the prompt from the hub
