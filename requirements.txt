@@ -1,5 +1,5 @@
-pyautogen
-pyautogen[gemini,retrievechat,lmm]
+ag2
+ag2[gemini,retrievechat,lmm]
 
 langchain
 sentence_transformers
